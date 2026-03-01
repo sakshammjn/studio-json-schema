@@ -117,6 +117,12 @@ export const processAST: ProcessAST = ({ ast, schemaUri, nodes, edges, parentId,
     }
 
     const schemaNodes: boolean | HJNode<unknown>[] = ast[schemaUri];
+
+    if (schemaNodes === undefined || schemaNodes === null) {
+        console.warn(`Schema URI not found in AST or is null: ${schemaUri}`);
+        return;
+    }
+
     const nodeData: NodeData = {};
     const sourceHandles: HandleConfig[] = [];
     const targetHandles: HandleConfig[] = [];
@@ -195,10 +201,13 @@ const generateSourceHandles: GenerateSourceHandles = (key, value, nodeId, defs) 
 
     // CASE 1: Array --> generate 1 handle per element
     if (Array.isArray(value)) {
-        return value.map((eachValue) => ({
-            handleId: `${nodeId}-${eachValue}`,
-            position: Position.Right
-        }))
+        return value.map((eachValue) => {
+            const suffix = (key === "dependentSchemas") ? `dependentSchemas-${eachValue}` : eachValue;
+            return {
+                handleId: `${nodeId}-${suffix}`,
+                position: Position.Right
+            }
+        })
     }
 
     // CASE 2: Everything else --> 1 handle for this property
@@ -351,7 +360,23 @@ const keywordHandlerMap: KeywordHandlerMap = {
         }
         return { key: "patternProperties", data: { value: getArrayFromNumber(value.length) } }
     },
-    // "https://json-schema.org/keyword/dependentSchemas": createBasicKeywordHandler("dependentSchemas"),
+    "https://json-schema.org/keyword/dependentSchemas": (ast, keywordValue, nodes, edges, parentId, nodeDepth, renderedNodes) => {
+        const dependentSchemaNames: string[] = [];
+        
+        let entries: [string, string][] = [];
+        if (Array.isArray(keywordValue)) {
+            entries = keywordValue as [string, string][];
+        } else if (typeof keywordValue === 'object' && keywordValue !== null) {
+            entries = Object.entries(keywordValue) as [string, string][];
+        }
+
+        for (const [key, value] of entries) {
+            dependentSchemaNames.push(key);
+            processAST({ ast, schemaUri: value, nodes, edges, parentId, renderedNodes, childId: `dependentSchemas-${key}`, nodeTitle: `dependentSchemas["${key}"]`, nodeDepth });
+        }
+        return { key: "dependentSchemas", data: { value: dependentSchemaNames } }
+    },
+    
     "https://json-schema.org/keyword/contains": (ast, keywordValue, nodes, edges, parentId, nodeDepth, renderedNodes) => {
         const value = keywordValue as { contains: string; minContains: number; maxContains: number };
         processAST({ ast, schemaUri: value.contains, nodes, edges, parentId, childId: "contains", renderedNodes, nodeTitle: "contains", nodeDepth });

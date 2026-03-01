@@ -97,18 +97,27 @@ const CustomNode = ({ data, id, selected }: { data: RFNodeData; id: string; sele
 
               {isArray ? (
                 <div className="flex-col w-full">
-                  {(keyData.value as string[]).map((item, index) => (
-                    <div
-                      ref={(el) => {
-                        rowRefs.current[`${id}-${item}`] = el;
-                      }}
-                      key={index}
-                      className="px-2 py-[2px] bg-[var(--node-value-bg-color)]"
-                      style={{ border: `1px solid ${data.nodeStyle.color}30` }}
-                    >
-                      {item}
-                    </div>
-                  ))}
+                  {(keyData.value as string[]).map((item, index) => {
+                    const refKey =
+                      key === "dependentSchemas"
+                        ? `${id}-dependentSchemas-${item}`
+                        : `${id}-${item}`;
+
+                    return (
+                      <div
+                        ref={(el) => {
+                          rowRefs.current[refKey] = el;
+                        }}
+                        key={index}
+                        className="px-2 py-[2px] bg-[var(--node-value-bg-color)]"
+                        style={{
+                          border: `1px solid ${data.nodeStyle.color}30`,
+                        }}
+                      >
+                        {item}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <span
