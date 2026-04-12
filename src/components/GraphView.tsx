@@ -305,6 +305,12 @@ const GraphView = ({
         setCurrentMatchIndex(0);
         setErrorMessage("");
         setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+        setEdges((eds) =>
+          eds.map((edge) => ({
+            ...edge,
+            selected: false,
+          }))
+        );
         fitView({ duration: 800, padding: 0.05 });
         return;
       }
@@ -373,6 +379,12 @@ const GraphView = ({
         onEdgeMouseLeave={() => setHoveredEdgeId(null)}
         onPaneClick={() => {
           setSelectedNode(null);
+          setEdges((eds) =>
+            eds.map((edge) => ({
+              ...edge,
+              selected: false,
+            }))
+          );
         }}
       >
         <Background
@@ -398,6 +410,13 @@ const GraphView = ({
           data={selectedNode.data}
           onClose={() => {
             setSelectedNode(null);
+            setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
+            setEdges((eds) =>
+              eds.map((edge) => ({
+                ...edge,
+                selected: false,
+              }))
+            );
           }}
         />
       )}
